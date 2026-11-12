@@ -1,3 +1,12 @@
+def deployApp(String target, String webPort, String miniPort) {
+    sh """
+        rsync -rv --delete --exclude=.git --exclude=Jenkinsfile ./ /var/www/${target}-tamashaweb/
+        rsync -rv --delete --exclude=.git --exclude=Jenkinsfile ./ /var/www/${target}-tamasha_mini/
+        curl -fsS -o /dev/null http://127.0.0.1:${webPort}/
+        curl -fsS -o /dev/null http://127.0.0.1:${miniPort}/
+    """
+}
+
 pipeline {
     agent any
 
@@ -21,12 +30,7 @@ pipeline {
         // ---------- DEV: automatic ----------
         stage('Deploy to DEV') {
             when { branch 'dev' }
-            steps {
-                sh '''
-                    rsync -rv --delete --exclude=.git --exclude=Jenkinsfile ./ /var/www/dev-tamashaweb/
-                    curl -fsS -o /dev/null http://127.0.0.1:8081/
-                '''
-            }
+            steps { script { deployApp('dev', '8081', '9081') } }
         }
 
         // ---------- UAT: approval ke baad ----------
@@ -40,12 +44,7 @@ pipeline {
         }
         stage('Deploy to UAT') {
             when { branch 'uat' }
-            steps {
-                sh '''
-                    rsync -rv --delete --exclude=.git --exclude=Jenkinsfile ./ /var/www/uat-tamashaweb/
-                    curl -fsS -o /dev/null http://127.0.0.1:8082/
-                '''
-            }
+            steps { script { deployApp('uat', '8082', '9082') } }
         }
 
         // ---------- PREPROD: approval ke baad ----------
@@ -59,12 +58,7 @@ pipeline {
         }
         stage('Deploy to PreProd') {
             when { branch 'preprod' }
-            steps {
-                sh '''
-                    rsync -rv --delete --exclude=.git --exclude=Jenkinsfile ./ /var/www/preprod-tamashaweb/
-                    curl -fsS -o /dev/null http://127.0.0.1:8083/
-                '''
-            }
+            steps { script { deployApp('preprod', '8083', '9083') } }
         }
     }
 
